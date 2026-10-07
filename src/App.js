@@ -1,74 +1,48 @@
 import './App.css';
-import { useState } from 'react';
-
+import { useEffect, useState } from 'react';
+/**
+    Usar async/await.
+    Tratar erros com try/catch.
+    Verificar se a resposta HTTP foi bem-sucedida.
+    Exibir Carregando... enquanto a requisição estiver em andamento.
+    Exibir uma mensagem caso a API falhe.
+    Exibir os produtos quando a requisição terminar.
+    A requisição deve acontecer quando o componente for montado.
+ */
 function App() {
-
-  const [auditoria, setAuditoria] = useState(null);
+  const [produtos, setProdutos] = useState([]);
   const [erro, setErro] = useState(null);
+  const [mensagem, setMensagem] = useState(true);
 
-  const carregaAuditoria = async () => {
+  useEffect(() => {
+    async function carregaProdutos(){
+      try {
+        const response = await fetch('http://localhost:5000/api/produtos')
 
-    try {
-
-      const resposta = await fetch(
-        "http://localhost:5000/api/produtos/auditoria"
-      );
-
-      const data = await resposta.json();
-
-      console.log("PRODUTOS CARREGADOS:", data);
-
-      setAuditoria(data);
-
-    } catch (err) {
-
-      console.log(
-        `Erro ao buscar produtos no banco de dados: ${err.message}`
-      );
-
-      setErro("Erro ao carregar produtos");
+        if (!response.ok) {
+          throw new Error(`Erro na requisição verifique se a url está correta ${response.status}`)  
+        }
+        const data = await response.json()
+        setProdutos(data.produto)
+        console.log(data)
+      } catch (error) {
+        console.error(`Não foi possível obter os produtos ${error}`)
+      }finally{
+        setMensagem(false)
+      }
     }
-  };
-
-  console.log("AUDITORIA:", auditoria);
-
+    carregaProdutos()
+  },[])
+  if(mensagem){
+    return <div>Carregando...</div>
+  }
   return (
     <div className="App">
-
-      <button onClick={carregaAuditoria}>
-        Carregar Auditoria
-      </button>
-
-      {erro && (
-        <p>{erro}</p>
-      )}
-
-      {auditoria && (
+      {produtos.map((prod) => (
         <div>
-
-          <p>
-            Produtos ativos:
-            {auditoria.totalProdutosAtivos}
-          </p>
-
-          <p>
-            Produtos sem estoque:
-            {auditoria.produtosSemEstoque}
-          </p>
-
-          <p>
-            Estoque baixo:
-            {auditoria.estoqueBaixo}
-          </p>
-
-          <p>
-            Estoque normal:
-            {auditoria.estoqueNormal}
-          </p>
-
+          <span key={prod._id}>{prod.nome}</span>
         </div>
-      )}
-
+      ))}
     </div>
   );
 }
